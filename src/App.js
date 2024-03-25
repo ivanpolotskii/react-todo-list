@@ -1,25 +1,66 @@
-import logo from './logo.svg';
-import './App.css';
+import { observer } from "mobx-react";
+import store from "./Store";
 
-function App() {
+import Task from "./components/Task";
+import { useEffect } from "react";
+
+const App = observer(() => {
+  useEffect(() => {
+    if (localStorage.getItem("tasks")) {
+      store.setTodoList(JSON.parse(localStorage.getItem("tasks")));
+    }
+    if (localStorage.getItem("accomplishedTasks")) {
+      store.setAccomplishedTasks(
+        JSON.parse(localStorage.getItem("accomplishedTasks"))
+      );
+    }
+  }, []);
+
+  const isNotBlank = (str) => {
+    return str.trim() !== "";
+  };
+
+  const handleChange = (event) => {
+    store.setNewTask(event.target.value);
+  };
+
+  const addTask = () => {
+    if (isNotBlank(store.newTask)) {
+      const newTodoList = store.todoList;
+      newTodoList.push(store.newTask);
+      store.setTodoList(newTodoList);
+      store.setNewTask("");
+      localStorage.setItem("tasks", JSON.stringify(newTodoList)); // <-- Changed to newTodoList
+    }
+  };
+
+  const handleKeyPress = (event) => {
+    if (event.key === 'Enter') {
+      addTask();
+    }
+  };
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <div className="addTask">
+        <input type="text" value={store.newTask} onChange={handleChange} onKeyPress={handleKeyPress} />
+        <button onClick={addTask}>Add Task</button>
+      </div>
+
+      <div className="list">
+        {store.todoList.map((task, index) => {
+          return <Task task={task} index={index} accomplished={false} />;
+        })}
+      </div>
+
+      <div className="accomplished">
+        <span className="accomplished-text">Завершено</span>
+        {store.accomplishedTasks.map((task, index) => {
+          return <Task task={task} index={index} accomplished={true} />;
+        })}
+      </div>
     </div>
   );
-}
+});
 
 export default App;
